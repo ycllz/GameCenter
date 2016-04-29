@@ -12,7 +12,6 @@ package manager.loading
 	import flash.utils.getTimer;
 	
 	import manager.LayerManager;
-	import manager.StageResizeController;
 	
 	import com.lilynumber1.utils.AlignType;
 	import com.lilynumber1.utils.DisplayUtil;
@@ -102,13 +101,11 @@ package manager.loading
 			_loadingBar.gotoAndStop(_currentFrame);
 			
 			layout();
-			StageResizeController.instance.register(layout);
 		}
 		
 		override public function hide():void
 		{
 			super.hide();
-			StageResizeController.instance.unregister(layout);
 		}
 		
 		private function layout():void
@@ -134,7 +131,6 @@ package manager.loading
 		 */
 		override public function destroy():void
 		{
-			StageResizeController.instance.unregister(layout);
 			_percentText = null;
 			_percentBar = null;
 			_rect = null;

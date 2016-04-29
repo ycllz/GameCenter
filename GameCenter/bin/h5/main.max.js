@@ -36210,12 +36210,10 @@ window.Laya=(function(window,document){
 			}
 			this._loadingBar.gotoAndStop(this._currentFrame);
 			this.layout();
-			manager.StageResizeController.instance.register(__bind(this,this.layout));
 		}
 
 		__proto.hide=function(){
 			manager.loading.BaseLoading.prototype.hide.call(this);
-			manager.StageResizeController.instance.unregister(__bind(this,this.layout));
 		}
 
 		__proto.layout=function(){
@@ -36224,7 +36222,6 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.destroy=function(){
-			manager.StageResizeController.instance.unregister(__bind(this,this.layout));
 			this._percentText=null;
 			this._percentBar=null;
 			this._rect=null;
@@ -36384,6 +36381,8 @@ window.Laya=(function(window,document){
 	var Main=(function(_super){
 		function Main(){
 			this._entry=null;
+			this._preLoader=null;
+			this._loader=null;
 			Main.__super.call(this);
 			IFlash.setSize(800,480);
 			IFlash.setOrientationEx(0);
@@ -36393,14 +36392,38 @@ window.Laya=(function(window,document){
 			this.addChild(root);
 			LayerManager.setup(root);
 			ClientConfig.setup();
-			var loader=new Loader();
-			loader.contentLoaderInfo.addEventListener(/*iflash.events.Event.COMPLETE*/"complete",__bind(this,this.initGame));
-			loader.load(new URLRequest("assets/gameUI.swf"),
+			this._preLoader=new Loader();
+			this._preLoader.contentLoaderInfo.addEventListener(/*iflash.events.Event.COMPLETE*/"complete",__bind(this,this.initLoading));
+			this._preLoader.load(new URLRequest("assets/loadingUI.swf"),
 			new LoaderContext(false,ApplicationDomain.currentDomain));
 		}
 
 		__class(Main,'Main',false,_super);
 		var __proto=Main.prototype;
+		__proto.initLoading=function(event){
+			LoadingManager.setup(this._preLoader);
+			this._loader=new UILoader("assets/gameUI.swf",LayerManager.gameLevel,/*manager.loading.LoadingType.TITLE_AND_PERCENT*/1,"正在加载……",true,true);
+			this._loader.addEventListener(UILoadEvent.COMPLETE,__bind(this,this.onLoadComplete));
+			this._loader.addEventListener(UILoadEvent.CLOSE,__bind(this,this.onLoadClose));
+			this._loader.addEventListener(/*iflash.events.IOErrorEvent.IO_ERROR*/"ioError",__bind(this,this.onError));
+			this._loader.load();
+		}
+
+		__proto.onLoadComplete=function(e){
+			this._loader.removeEventListener(UILoadEvent.COMPLETE,__bind(this,this.onLoadComplete));
+			this._loader.removeEventListener(UILoadEvent.CLOSE,__bind(this,this.onLoadClose));
+			this._loader.removeEventListener(/*iflash.events.IOErrorEvent.IO_ERROR*/"ioError",__bind(this,this.onError));
+			this.initGame();
+		}
+
+		__proto.onLoadClose=function(e){
+			this.dispatchEvent(new Event(/*iflash.events.Event.CLOSE*/"close"));
+		}
+
+		__proto.onError=function(e){
+			this.dispatchEvent(e);
+		}
+
 		__proto.initGame=function(event){
 			this._entry=new (ApplicationDomain.currentDomain.getDefinition("entryUI"))();
 			LayerManager.gameLevel.addChild(this._entry);
@@ -36817,8 +36840,6 @@ window.Laya=(function(window,document){
 	//class panel.JewelleryGamePanel extends model.BaseViewModule
 	var JewelleryGamePanel=(function(_super){
 		function JewelleryGamePanel(){
-			this.RECORED_START=12044;
-			this.RECORED_END=12045;
 			this._map=null;
 			this._maxValue=0;
 			this._currentScore=0;
